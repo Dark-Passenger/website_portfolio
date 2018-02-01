@@ -10,59 +10,32 @@ export class SmoothScrollDirective {
   constructor() { }
 
   @Input('appSmoothScroll') public scrollTo: string;
-	@Input('duration') public duration: number;
-	@Input('offset') public offset: number;
-	@Input('easing') public easing: string;
-	@Input('callbackBefore') public callbackBefore: any;
-	@Input('callbackAfter') public callbackAfter: any;
-	@Input('containerId') public containerId: string;
-	@Input('middleAlign') public middleAlign: any;
 
 	@HostListener('click') onClick() {
 		this.targetElement = document.getElementById(this.scrollTo);
 		if (!this.targetElement) return;
 
-		new SmoothScroll(this.targetElement, {
-			duration: this.duration,
-			offset: this.offset,
-			easing: this.easing,
-			callbackBefore: this.callbackBefore,
-			callbackAfter: this.callbackAfter,
-			containerId: this.containerId,
-			middleAlign: this.middleAlign
-		});
+		new SmoothScroll(this.targetElement);
 	};
 }
 
 class SmoothScroll {
-	constructor(element: any, options: any) {
-		this.smoothScroll(element, options);
+	constructor(element: any) {
+		this.smoothScroll(element);
 	}
-	private smoothScroll(element, options) {
-		options = options || {};
+	private smoothScroll(element) {
 
 		// Options
-		let duration = options.duration || 800,
-			offset = options.offset || 0,
-			easing = options.easing || 'easeInOutQuart',
-			callbackBefore = options.callbackBefore || function(){},
-			callbackAfter = options.callbackAfter || function(){},
-			container = document.getElementById(options.containerId) || null,
-			containerPresent = (container != undefined && container != null),
-			middleAlign = options.middleAlign || false;
+		let duration = 800;
 
 		/**
 		 * Retrieve current location
 		 */
 		let getScrollLocation = function () {
-			if (containerPresent) {
-				return container.scrollTop;
+			if (window.pageYOffset) {
+				return window.pageYOffset;
 			} else {
-				if (window.pageYOffset) {
-					return window.pageYOffset;
-				} else {
-					return document.documentElement.scrollTop;
-				}
+				return document.documentElement.scrollTop;
 			}
 		};
 
@@ -73,22 +46,8 @@ class SmoothScroll {
 		 * - changed if-else to switch
 		 * @see http://archive.oreilly.com/pub/a/server-administration/excerpts/even-faster-websites/writing-efficient-javascript.html
 		 */
-		let getEasingPattern = function (type, time) {
-			switch (type) {
-				case 'easeInQuad': return time * time; // accelerating from zero velocity
-				case 'easeOutQuad': return time * (2 - time); // decelerating to zero velocity
-				case 'easeInOutQuad': return time < 0.5 ? 2 * time * time : -1 + (4 - 2 * time) * time; // acceleration until halfway, then deceleration
-				case 'easeInCubic': return time * time * time; // accelerating from zero velocity
-				case 'easeOutCubic': return (--time) * time * time + 1; // decelerating to zero velocity
-				case 'easeInOutCubic': return time < 0.5 ? 4 * time * time * time : (time - 1) * (2 * time - 2) * (2 * time - 2) + 1; // acceleration until halfway, then deceleration
-				case 'easeInQuart': return time * time * time * time; // accelerating from zero velocity
-				case 'easeOutQuart': return 1 - (--time) * time * time * time; // decelerating to zero velocity
-				case 'easeInOutQuart': return time < 0.5 ? 8 * time * time * time * time : 1 - 8 * (--time) * time * time * time; // acceleration until halfway, then deceleration
-				case 'easeInQuint': return time * time * time * time * time; // accelerating from zero velocity
-				case 'easeOutQuint': return 1 + (--time) * time * time * time * time; // decelerating to zero velocity
-				case 'easeInOutQuint': return time < 0.5 ? 16 * time * time * time * time * time : 1 + 16 * (--time) * time * time * time * time; // acceleration until halfway, then deceleration
-				default: return time;
-			}
+		let getEasingPattern = function (time) {
+			return time < 0.5 ? 8 * time * time * time * time : 1 - 8 * (--time) * time * time * time; // acceleration until halfway, then deceleration
 		};
 
 		/**
@@ -99,15 +58,7 @@ class SmoothScroll {
 				elementRect = element.getBoundingClientRect(),
 				absoluteElementTop = elementRect.top + window.pageYOffset;
 
-			if (middleAlign) {
-				location = (absoluteElementTop + (element.offsetHeight / 2)) - (window.innerHeight / 2);
-			} else {
-				location = absoluteElementTop;
-			}
-
-			if (offset) {
-				location = location - offset;
-			}
+			location = absoluteElementTop;
 
 			return Math.max(location, 0);
 		};
@@ -129,13 +80,8 @@ class SmoothScroll {
 			 */
 			let stopAnimation = function () {
 				currentLocation = getScrollLocation();
-				if (containerPresent) {
-					scrollHeight = container.scrollHeight;
-					internalHeight = container.clientHeight + currentLocation;
-				} else {
-					scrollHeight = document.body.scrollHeight;
-					internalHeight = window.innerHeight + currentLocation;
-				}
+				scrollHeight = document.body.scrollHeight;
+				internalHeight = window.innerHeight + currentLocation;
 
 				if (
 					( // condition 1
@@ -149,8 +95,6 @@ class SmoothScroll {
 					)
 				) { // stop
 					clearInterval(runAnimation);
-
-					callbackAfter(element);
 				}
 			};
 
@@ -161,16 +105,10 @@ class SmoothScroll {
 				timeLapsed += 16;
 				percentage = (timeLapsed / duration);
 				percentage = (percentage > 1) ? 1 : percentage;
-				position = startLocation + (distance * getEasingPattern(easing, percentage));
-				if (containerPresent) {
-					container.scrollTop = position;
-				} else {
-					window.scrollTo(0, position);
-				}
+				position = startLocation + (distance * getEasingPattern(percentage));
+				window.scrollTo(0, position);
 				stopAnimation();
 			};
-
-			callbackBefore(element);
 
 			let runAnimation = setInterval(animateScroll, 16);
 		}, 0);
