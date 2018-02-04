@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormsModule, FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { FormArray } from '@angular/forms/src/model';
 
 @Component({
@@ -9,9 +10,9 @@ import { FormArray } from '@angular/forms/src/model';
 })
 export class ContactComponent implements OnInit {
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
   
-  not_submitted: boolean;
+  error: boolean;
   submitted: boolean;
   myform: FormGroup;
   name: FormControl;
@@ -21,18 +22,21 @@ export class ContactComponent implements OnInit {
 
   ngOnInit() {
     this.submitted = false;
+    this.error = false;
     this.createFormControls();
     this.message = new FormControl();
     this.createForm();
   }
   
   onSubmit() {
-    if (this.myform.valid) {
-      console.log("Form Submitted!");
       console.log(this.myform.value);
+      this.http.post("http://api.happybrain.coach", this.myform.value)
+                    .subscribe(
+                      data => this.submitted = true,
+                      error => this.error = true
+                    );
+                    
       this.myform.reset();
-      this.submitted = true;
-    }
   }
 
   createFormControls() {
