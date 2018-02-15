@@ -1,14 +1,14 @@
   // Core variables and mixins
-  @import '../../scss/variables';
-  @import '../../scss/mixins';
+  @import '~scss/variables';
+  @import '~scss/mixins';
   
   // Global CSS
-  @import '../../scss/global';
+  @import '~scss/global';
 
   // Styling for the contact section
 section#contact {
   background-color: $gray-900;
-  background-image: url('../../assets/map-image.png');
+  background-image: url("/assets/map-image.png");
   background-repeat: no-repeat;
   background-position: center;
   .section-heading {
